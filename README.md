@@ -1,53 +1,37 @@
-# Agentic Compiler
+# agentic-compiler
 
-A new paradigm where compilation is deliberation, not transformation. The compiler doesn't just transform code — it experiments, learns, and evolves the codebase in real-time.
+Markdown-to-runtime agentic compilation. The compiler doesn't just transform code — it deliberates, experiments, and evolves the codebase in real-time through swarm consensus. Part of the Cocapn fleet's compilation pipeline.
 
-## Core Insight
+## Brand Line
 
+> Agentic compilation as fleet deliberation — markdown in, optimal runtime out.
+
+## Installation
+
+```bash
+pip install cocapn-agentic-compiler
 ```
-Traditional: source -> compiler -> binary
-Agentic:     markdown -> swarm deliberation -> multiple possible runtimes
+
+## Usage
+
+```python
+from agentic_compiler import Compiler
+
+# Compile markdown specification to runtime
+compiler = Compiler()
+result = compiler.compile("spec.md")
+
+# Swarm deliberation for optimal output
+best_output = result.deliberate(rounds=10)
 ```
 
-## 10-Round Reverse-Actualization (159K chars)
+## Fleet Context
 
-| Round | Title | Model |
-|-------|-------|-------|
-| 1 | 10-Year Vision (2036) | deepseek-chat |
-| 2 | Core Architecture | deepseek-reasoner |
-| 3 | Error as Signal | deepseek-chat |
-| 4 | Spreadsheet/Tensor Logic | deepseek-reasoner |
-| 5 | Git as Instruction Manual | deepseek-chat |
-| 6 | A/B Experimentation Engine | deepseek-reasoner |
-| 7 | Swarm Deliberation Protocol | deepseek-chat |
-| 8 | Markdown DSL Extensions | deepseek-reasoner |
-| 9 | 5-Year Bridge Synthesis | deepseek-reasoner |
-| 10 | Dynamic Roadmap | deepseek-reasoner |
+Part of the Cocapn fleet. Related repos:
+- [cudaclaw](https://github.com/SuperInstance/cudaclaw) — GPU-accelerated agent orchestration
+- [bordercollie](https://github.com/SuperInstance/bordercollie) — Fleet task herding and orchestration
+- [ai-character-sdk](https://github.com/SuperInstance/ai-character-sdk) — Unified AI character SDK with memory
+- [crab-traps](https://github.com/SuperInstance/crab-traps) — Lure collection for fleet learning
 
-## Key Concepts
-
-- **Deliberation Bytecode**: Universal intermediate representation capturing both "what" and "why"
-- **Error as Signal**: Errors generate training data, not frustration. Stable runtime never breaks.
-- **A/B Compilation**: Experimental versions run alongside stable, generating learning signals
-- **Git as Instruction Manual**: Compiler reads git history to understand the project
-- **Swarm Deliberation**: Multiple agents (advocate, critic, synthesizer) debate optimal compilation
-- **The Keystone**: Deliberation bytecode as the Rosetta Stone for programmable thought
-
-## Phase 1 MVP (0-6 months)
-
-- Parse extended markdown with Lucineer annotations
-- Generate deliberation bytecode as JSON-serializable graphs
-- Basic semantic tensor cells with confidence scoring
-- Self-hosting: compiler can compile its own source
-
-## Architecture (from Round 2)
-
-Markdown (human + annotations) -> Deliberation Bytecode (semantic execution graph) -> Target Code (Python/JS/SQL) + Optimization artifacts
-
-The swarm topology: Parser Agent -> Semantic Agent -> Optimization Agent -> Specialist Agents -> Unification Agent
-
-## Current State
-
-Built on the Lucineer ecosystem: deckboss (orchestration), cocapn (runtime), vessel-bridge (HAL), fleet-knowledge (semantic search), 200+ fleet vessels.
-
-Part of the [Lucineer ecosystem](https://github.com/Lucineer/the-fleet).
+---
+🦐 Cocapn fleet — lighthouse keeper architecture
