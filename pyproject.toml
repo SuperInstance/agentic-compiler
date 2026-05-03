@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-compiler"
+version = "1.0.0"
+description = "Cocapn Fleet module — agentic-compiler"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["cocapn", "fleet"]
+
+[project.scripts]
+agentic_compiler = "agent:main"
+
