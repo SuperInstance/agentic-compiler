@@ -1,16 +1,45 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentic-compiler"
-version = "1.0.0"
-description = "Cocapn Fleet module — agentic-compiler"
+version = "0.1.0"
+description = "Runtime-adaptive compilation for Python — auto-profile, auto-compile, hot-swap."
 readme = "README.md"
-requires-python = ">=3.10"
 license = {text = "MIT"}
-keywords = ["cocapn", "fleet"]
+authors = [{name = "Cocapn Fleet", email = "fleet@cocapn.org"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: System :: Distributed Computing",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.20",
+]
 
-[project.scripts]
-agentic_compiler = "agent:main"
+[project.optional-dependencies]
+numba = ["numba>=0.56"]
+all = ["numba>=0.56"]
 
+[project.urls]
+Homepage = "https://github.com/SuperInstance/agentic-compiler"
+Repository = "https://github.com/SuperInstance/agentic-compiler"
+Issues = "https://github.com/SuperInstance/agentic-compiler/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agentic_compiler*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v"

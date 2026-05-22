@@ -1,214 +1,154 @@
-**Topics:** `agentic-compilation` `markdown-spec` `swarm-deliberation` `refinement-amplifier` `code-generation` `collective-intelligence` `cocapn`
+# agentic-compiler
 
----
+Runtime-adaptive compilation for Python. Automatically profiles hot functions, compiles them to optimized backends (Numba, Rust, CUDA), and hot-swaps them at runtime — no human intervention required.
 
-# Agentic Compiler
+## The Pitch
 
-> Agentic compilation as fleet deliberation — markdown in, optimal runtime out.
+You write plain Python. The compiler watches. After 100+ calls it notices your function is slow, compiles it with Numba, verifies the output is identical, measures the speedup, and silently replaces the slow version — all while your program is still running. If the compiled version is ever wrong, it rolls back in one call.
 
-**Agentic Compiler** compiles natural language markdown specifications into executable runtime code through **swarm deliberation** — multiple agents deliberating in rounds, refining the output until consensus emerges. Part of the Cocapn fleet's compilation pipeline.
-
-Part of the [Cocapn fleet](https://github.com/SuperInstance) — lighthouse keeper architecture.
-
----
-
-## What It Does
-
-Traditional compilers read code and emit executables. The Agentic Compiler reads **markdown specs** and emits **runtime code** through a multi-agent deliberative process:
-
-1. **Markdown input** — A human (or agent) writes what they want in plain language
-2. **RA rounds** — Refinement Amplifier runs N rounds of agent deliberation
-3. **Swarm consensus** — Multiple agents evaluate, critique, and improve the output
-4. **Optimal output** — The best result emerges from collective intelligence
-
-### Key Features
-
-- **Markdown-first** — Write specs in natural language, not code
-- **Swarm deliberation** — Multiple agents, multiple rounds, collective refinement
-- **RA (Refinement Amplifier)** — Each round amplifies what's good, narrows what's wrong
-- **Plurality voting** — Agents vote on best output, reducing individual bias
-
----
-
-## Quick Start
-
-### Install
+## Installation
 
 ```bash
-pip install cocapn-agentic-compiler
+pip install agentic-compiler
 ```
 
-### Basic Usage
+With Numba support (recommended):
+```bash
+pip install agentic-compiler[numba]
+```
+
+## Quickstart
+
+```python
+from agentic_compiler import Compiler
+import numpy as np
+
+compiler = Compiler()
+compiler.install()  # monkey-patch all hot paths
+
+# Your normal code — the compiler is watching
+def slow_sum(arr):
+    total = 0.0
+    for i in range(len(arr)):
+        total += arr[i] * arr[i]
+    return total
+
+# Run it enough times to trigger compilation
+for _ in range(200):
+    slow_sum(np.random.randn(1000))
+
+# The compiler will auto-compile and hot-swap if speedup > 2x
+print(compiler.profiler.report())
+```
+
+### Decorator-style profiling
+
+```python
+from agentic_compiler import Profiler
+
+profiler = Profiler(sample_rate=0.05)
+
+@profiler.watch
+def my_hot_function(x):
+    return np.sum(x ** 2)
+```
+
+### Manual hot-swap
 
 ```python
 from agentic_compiler import Compiler
 
-# Initialize the compiler
 compiler = Compiler()
 
-# Compile a markdown specification
-result = compiler.compile("spec.md")
+result = compiler.hot_swap(my_slow_function)
+print(f"Speedup: {result.speedup:.1f}x, Validated: {result.validated}")
 
-# Get the deliberated output
-best_output = result.deliberate(rounds=10)
-
-print(best_output["code"])
-print(f"Consensus score: {best_output['score']}")
-print(f"Rounds: {best_output['rounds']}")
+# Rollback if something goes wrong
+compiler.restore()
 ```
 
-### Run the RA Pipeline Manually
-
-```bash
-python scripts/run-ra.py --input spec.md --rounds 10 --output out/
-```
-
-### Programmatic RA
+### One-shot compilation
 
 ```python
-from agentic_compiler import RefinementAmplifier
+from agentic_compiler import ast_to_numba
 
-ra = RefinementAmplifier(n_agents=5, rounds=10)
-output = ra.deliberate(
-    initial_spec="A REST API for a fleet registry with CRUD operations",
-    domain="api"
-)
-
-print(output.best_candidate)
-print(f"Winners: {output.vote_tally()}")
+kernel = ast_to_numba(my_function)
+if kernel.ready:
+    print(f"Compiled to {kernel.backend} in {kernel.compile_time_ms:.1f}ms")
 ```
 
----
+## Grid-Aware Backend Selection
+
+The `GridBackendSelector` automatically picks the right backend based on workload size:
+
+| Workload Size | Backend | Why |
+|--------------|---------|-----|
+| n < 50 | numpy | ctypes overhead dominates |
+| 50–500 | rust_oneshot | medium arrays |
+| 500+ | rust_persistent | zero-copy, weights in Rust |
+| 1000+ (GPU available) | cuda | maximum parallelism |
+
+```python
+from agentic_compiler import GridBackendSelector
+
+backend = GridBackendSelector.select(n_rooms=750)
+print(GridBackendSelector.report())
+```
+
+## API Reference
+
+### `Compiler`
+
+- `install(module_name=None)` — monkey-patch functions for profiling
+- `uninstall()` — restore originals
+- `compile_hotspots(top_n=5)` — auto-compile top-N hot functions
+- `compile_function(func, module, attr_name)` — manual compile + swap
+- `hot_swap(func, module, attr_name, backend)` — compile + swap in one call
+- `restore(key=None)` — rollback to original function
+
+### `Profiler`
+
+- `watch(func)` — decorator to profile a function
+- `get_hotspots(top_n=10)` — ranked list by optimization potential
+- `report()` — human-readable profiling summary
+
+### `CodeGenerator`
+
+- `compile(func)` — compile to best available backend
+- `validate(kernel, original, test_args)` — A/B test for correctness
+- `measure_speedup(kernel, original, test_args)` — benchmark speedup
+- `deploy(kernel, module, attr_name)` — hot-swap into module
+
+### `GeneratedKernel`
+
+- `ready` — bool, True if compilation succeeded
+- `compiled` — the compiled callable
+- `backend` — "numba", "rust", or "python"
+- `compile_time_ms` — how long compilation took
+- `speedup` — measured speedup vs original
 
 ## Architecture
 
 ```
-agentic-compiler/
-├── README.md
-├── LICENSE
-├── docs/
-│   └── ra/
-│       ├── round-1.md       # Round 1 deliberation notes
-│       ├── round-2.md
-│       ├── ...
-│       └── round-10.md      # Final round
-├── scripts/
-│   └── run-ra.py           # CLI entry point for RA pipeline
-└── tests/
-    └── test_agentic_compiler_docs.py
+Profiler → Analyzer → CodeGenerator → Validator → Deployer
+ (watch)   (rank)    (compile)     (A/B test)  (hot-swap)
 ```
 
-### RA Round Structure
+1. **Profiler** samples 5% of calls, tracks timing and input shapes
+2. **Analyzer** scores functions for Numba vs Rust suitability via AST
+3. **CodeGenerator** compiles to best backend, with fallback to identity
+4. **Validator** runs A/B tests to verify correctness
+5. **Deployer** hot-swaps if speedup exceeds 2× threshold
 
-Each `round-N.md` captures the deliberation at that stage:
+## Testing
 
-```
-Round 1: Initial spec → 3 agents propose candidates
-Round 2: Candidates → cross-evaluation, identify weaknesses
-Round 3: Refinement → agents revise based on feedback
-...
-Round N: Final vote → plurality vote, consensus score
-```
-
-### Refinement Amplifier Pipeline
-
-```
-Markdown Spec
-    │
-    ▼
-Round 1: 3 agents propose candidate implementations
-    │
-    ▼
-Each Round: Agents evaluate ALL candidates
-            + identify weaknesses
-            + vote on best
-            + revise their own candidate
-    │
-    ▼  (repeat N times)
-Round N: Final vote
-    │
-    ▼
-Output: Best candidate + consensus score
+```bash
+pip install -e ".[numba]"
+pytest
 ```
 
----
+Tests cover profiler instrumentation, backend selection, hot-swap correctness, and Numba integration (mocked when unavailable).
 
-## Example: Full RA Deliberation
+## License
 
-```python
-from agentic_compiler import RefinementAmplifier, Compiler
-
-compiler = Compiler()
-
-# Example spec: fleet routing algorithm
-spec = """
-# Fleet Routing Algorithm
-
-## Input
-- List of agent positions (x, y)
-- List of target waypoints
-- Max hops per agent
-
-## Output
-- Optimal routing table
-- Estimated completion time
-
-## Constraints
-- No agent collision
-- Respect max-hop limit
-"""
-
-result = compiler.compile_str(spec)
-best = result.deliberate(rounds=10)
-
-print(f"=== Best Output (score: {best['score']:.2f}) ===")
-print(best['code'])
-print()
-print(f"Voting breakdown: {best['votes']}")
-```
-
-### Sample Round Output (from docs/ra/round-3.md)
-
-```
-## Round 3 Deliberation
-
-### Agent A (proponent-dijkstra)
-Proposed: Dijkstra's algorithm for routing
-Votes received: 2
-Concerns: O(n²) complexity may not scale to 10k agents
-
-### Agent B (proponent-a*)
-Proposed: A* with spatial heuristic
-Votes received: 3
-Concerns: Memory overhead for large grids
-
-### Agent C (proponent-rr)
-Proposed: Round-robin with collision avoidance
-Votes received: 1
-Concerns: Not optimal, but simple
-
-### Cross-evaluation
-- All agents agree: collision avoidance is mandatory
-- Agents A and B agree: optimal path matters for fuel efficiency
-- Agent C's simplicity wins on implementation cost
-
-### Round 3 Decision
-Winner: Agent B (A* with spatial heuristic)
-Consensus score: 0.73
-```
-
----
-
-## Fleet Context
-
-Part of the Cocapn fleet. Related repos:
-
-| Repo | Role |
-|------|-------|
-| [cudaclaw](https://github.com/SuperInstance/cudaclaw) | GPU-accelerated agent orchestration |
-| [bordercollie](https://github.com/SuperInstance/bordercollie) | Fleet task herding and orchestration |
-| [ai-character-sdk](https://github.com/SuperInstance/ai-character-sdk) | Unified AI character SDK with memory |
-| [crab-traps](https://github.com/SuperInstance/crab-traps) | Lure collection for fleet learning |
-
----
-🦐 Cocapn fleet — lighthouse keeper architecture
+MIT
