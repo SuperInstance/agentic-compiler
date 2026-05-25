@@ -149,6 +149,12 @@ pytest
 
 Tests cover profiler instrumentation, backend selection, hot-swap correctness, and Numba integration (mocked when unavailable).
 
+## Related Repos
+
+- **[forgemaster](https://github.com/SuperInstance/forgemaster)** — Forge orchestration (uses agentic compilation for swarm deliberation)
+- **[cocapn-plato](https://github.com/SuperInstance/cocapn-plato)** — Fleet PLATO integration
+- **[tensor-spline](https://github.com/SuperInstance/tensor-spline)** — Compressed neural network layers
+
 ## License
 
 MIT
