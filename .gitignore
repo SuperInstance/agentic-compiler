@@ -7,3 +7,5 @@ __pycache__/
 *.dylib
 *.dll
 .DS_Store
+target/
+Cargo.lock
