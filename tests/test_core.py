@@ -107,9 +107,22 @@ class TestGridBackendSelector:
 
     def test_select_respects_thresholds(self):
         # With default HARDWARE (no rust/cuda), everything falls back to numpy
-        assert GridBackendSelector.select(10) == "numpy"
-        assert GridBackendSelector.select(100) == "numpy"
-        assert GridBackendSelector.select(2000) == "numpy"
+        # Mock HARDWARE to ensure consistent test behavior regardless of host
+        from agentic_compiler import core as acc_core
+        saved = acc_core.HARDWARE.copy()
+        try:
+            acc_core.HARDWARE = {
+                "numpy": True,
+                "numba": False,
+                "rust_persistent": False,
+                "rust_oneshot": False,
+                "cuda": False,
+            }
+            assert GridBackendSelector.select(10) == "numpy"
+            assert GridBackendSelector.select(100) == "numpy"
+            assert GridBackendSelector.select(2000) == "numpy"
+        finally:
+            acc_core.HARDWARE = saved
 
     def test_report_contains_headers(self):
         report = GridBackendSelector.report()

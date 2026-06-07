@@ -140,6 +140,80 @@ Profiler → Analyzer → CodeGenerator → Validator → Deployer
 4. **Validator** runs A/B tests to verify correctness
 5. **Deployer** hot-swaps if speedup exceeds 2× threshold
 
+### Pipeline Details
+
+```
+                    ┌────────────┐
+                    │  Profiler   │  Samples 5% of calls
+                    │  (watch)    │  Tracks timing & input shapes
+                    └─────┬──────┘
+                          │ Ranked by optimization_potential = calls × avg_time²
+                          ▼
+                    ┌────────────┐
+                    │  Analyzer   │  AST walk via PythonAnalyzer
+                    │  (rank)     │  Scores: Numba (+numpy, +loops) vs Rust (+dicts, +strings)
+                    └─────┬──────┘
+                          │
+                          ▼
+                    ┌────────────┐
+                    │CodeGenerator│  Tries backends in order: Numba → Rust → Python (identity)
+                    │ (compile)   │  Each backend decides if it can handle the function
+                    └─────┬──────┘
+                          │
+                          ▼
+                    ┌────────────┐
+                    │ Validator   │  A/B test: original vs compiled (5 trials)
+                    │(A/B test)   │  Compares with tolerance (1e-3 rtol, 1e-5 atol)
+                    └─────┬──────┘
+                          │
+                          ▼
+                    ┌────────────┐
+                    │  Deployer   │  setattr() hot-swap if speedup ≥ 2.0×
+                    │(hot-swap)   │  Preserves _agentic_original for rollback
+                    └────────────┘
+```
+
+### Backend Selection
+
+| Backend | When Used | Requirements |
+|---------|-----------|-------------|
+| **Numba** | Numeric loops, numpy ops | `pip install agentic-compiler[numba]` |
+| **Rust** | Dict-heavy, string processing | `libjepa_kernel.so` in `nerve/target/release/` |
+| **CUDA** | Large parallel workloads (n>1000) | `libcudart.so` available |
+| **Python** | Fallback — no speedup | Always available |
+
+## Ecosystem Integration
+
+The agentic compiler integrates with the [SuperInstance](https://github.com/SuperInstance) ecosystem:
+
+| Component | Relationship |
+|-----------|-------------|
+| **SIA** (Self-Improving Agent) | Uses the compiler as its optimization engine — identifies slow skills and compiles them |
+| **t-minus** | Feeds timing telemetry to the compiler, triggering compilation when operations near deadlines |
+| **Self-Improving Band** | Each band member's skills are compilation targets; the band gets faster over time |
+| **Band Crates** | Modular skill packages whose exported functions can be profiled and compiled |
+
+See [`SUPERINSTANCE.md`](./SUPERINSTANCE.md) for the full vision and architecture.
+
+### Quick Integration Example
+
+```python
+# Profile a band crate function
+from agentic_compiler import Compiler
+import numpy as np
+
+compiler = Compiler()
+
+# In production, this comes from t-minus telemetry
+# identifying swarm_deliberate() as a slow path
+result = compiler.hot_swap(swarm_deliberate, module=my_module, attr_name="deliberate")
+
+if result.validated:
+    print(f"Optimized: {result.speedup:.1f}× via {result.backend}")
+```
+
+See [`examples/`](./examples/) for complete integration patterns.
+
 ## Testing
 
 ```bash
